@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { ShieldCheck, Users, Factory, Recycle, AlertTriangle, TrendingUp, DollarSign, CheckCircle2, XCircle, Sliders, BarChart3 } from 'lucide-react';
 
 export const AdminDashboard = () => {
-  const { recyclers, materials } = useApp();
+  const { user, recyclers, materials } = useApp();
 
   const [stats, setStats] = useState({
     totalCollectors: 1420,
@@ -38,7 +38,7 @@ export const AdminDashboard = () => {
             <span className="bg-indigo-950 text-indigo-300 font-extrabold text-[10px] uppercase px-2 py-0.5 rounded border border-indigo-500/40">
               SIH Nodal Oversight Board
             </span>
-            <h2 className="text-2xl font-black text-white">National E-Waste Oversight Admin</h2>
+            <h2 className="text-2xl font-black text-white">{user?.name || 'National E-Waste Oversight Admin'}</h2>
           </div>
         </div>
         <p className="text-xs text-slate-300">

@@ -21,7 +21,7 @@ const MainContent = () => {
   const [activeTab, setActiveTab] = useState('home');
 
   if (!isLoggedIn) {
-    return <Login onLoginSuccess={() => setIsLoggedIn(true)} />;
+    return <Login onLoginSuccess={() => {}} />;
   }
 
   return (

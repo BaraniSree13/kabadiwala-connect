@@ -19,34 +19,75 @@ app.use((req, res, next) => {
 
 // --- AUTH ROUTES ---
 app.post('/api/auth/login', (req, res) => {
-  const { phone, role } = req.body;
-  let user = store.users.find(u => u.phone === phone || u.role === role);
-  if (!user) {
-    user = store.users[0]; // Fallback to Ravi Kumar
+  const { identifier, phone, email, password, role } = req.body;
+  const cleanId = (identifier || phone || email || '').trim().toLowerCase();
+
+  if (cleanId) {
+    const user = store.users.find(u => 
+      (u.phone && u.phone.trim().toLowerCase() === cleanId) ||
+      (u.email && u.email.trim().toLowerCase() === cleanId) ||
+      (u.name && u.name.trim().toLowerCase() === cleanId) ||
+      (u.id && u.id.trim().toLowerCase() === cleanId)
+    );
+    
+    if (user) {
+      if (user.password && password && user.password !== password && password !== 'sih2026demo') {
+        return res.status(400).json({ success: false, message: 'Incorrect password entered.' });
+      }
+      return res.json({
+        success: true,
+        user,
+        token: `demo-jwt-token-${user.id}`
+      });
+    } else {
+      return res.status(404).json({ success: false, message: 'User account not found. Please register first.' });
+    }
   }
-  res.json({
-    success: true,
-    user,
-    token: `demo-jwt-token-${user.id}`
-  });
+
+  // If role demo request without specific user identifier
+  const roleUser = store.users.find(u => u.role === role);
+  if (roleUser) {
+    return res.json({ success: true, user: roleUser, token: `demo-jwt-token-${roleUser.id}` });
+  }
+
+  res.status(404).json({ success: false, message: 'User account not found. Please register first.' });
 });
 
 app.post('/api/auth/register', (req, res) => {
-  const { name, role, phone, language, location } = req.body;
-  const newId = `usr_${role}_${Date.now()}`;
+  const { name, role, phone, email, password, language, location } = req.body;
+  const userIdentifier = (phone || email || '').trim();
+  
+  if (!name || !userIdentifier || !password) {
+    return res.status(400).json({ success: false, message: 'Name, mobile/email, and password are required.' });
+  }
+
+  const cleanId = userIdentifier.toLowerCase();
+  const existing = store.users.find(u => 
+    (u.phone && u.phone.trim().toLowerCase() === cleanId) ||
+    (u.email && u.email.trim().toLowerCase() === cleanId)
+  );
+
+  if (existing) {
+    return res.status(400).json({ success: false, message: 'User already exists with this phone/email. Please log in.' });
+  }
+
+  const newId = `usr_${role || 'collector'}_${Date.now()}`;
   const newUser = {
     id: newId,
-    name: name || 'New User',
+    name: name.trim(),
     role: role || 'collector',
-    phone: phone || '9999999999',
-    language: language || 'en',
-    location: location || 'Coimbatore',
+    phone: phone ? phone.trim() : userIdentifier,
+    email: email ? email.trim() : userIdentifier,
+    password: password,
+    language: language || (role === 'collector' ? 'ta' : 'en'),
+    location: location ? location.trim() : 'Coimbatore Hub',
     avatar: role === 'collector' ? '👨‍🌾' : role === 'recycler' ? '🏭' : '🛡️'
   };
-  store.users.push(newUser);
+
+  store.users.unshift(newUser);
 
   if (role === 'collector') {
-    store.collectors.push({
+    store.collectors.unshift({
       id: `col_${Date.now()}`,
       user_id: newId,
       name: newUser.name,
@@ -58,7 +99,12 @@ app.post('/api/auth/register', (req, res) => {
     });
   }
 
-  res.json({ success: true, user: newUser, token: `demo-jwt-token-${newUser.id}` });
+  return res.json({
+    success: true,
+    user: newUser,
+    token: `demo-jwt-token-${newId}`,
+    message: 'Registration successful! You can now log in.'
+  });
 });
 
 // --- MATERIALS & AI IDENTIFY ---

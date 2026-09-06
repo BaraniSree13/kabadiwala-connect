@@ -6,23 +6,218 @@ import { getOfflineQueue, enqueueAction, syncOfflineQueue } from '../utils/offli
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  // Authentication State
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  // Registered Users Storage
+  const [registeredUsers, setRegisteredUsers] = useState(() => {
+    const saved = localStorage.getItem('kc_registered_users_v1');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      {
+        id: 'usr_col_1',
+        name: 'Ravi Kumar',
+        role: 'collector',
+        phone: '9876543210',
+        email: 'ravi@kabadiwala.com',
+        password: 'sih2026demo',
+        language: 'ta',
+        location: 'Coimbatore South',
+        avatar: '👨‍🌾'
+      },
+      {
+        id: 'usr_rec_1',
+        name: 'GreenCycle Recycling Pvt Ltd',
+        role: 'recycler',
+        phone: '9123456780',
+        email: 'greencycle@recycling.com',
+        password: 'sih2026demo',
+        language: 'en',
+        location: 'Peelamedu Industrial Zone',
+        avatar: '🏭'
+      },
+      {
+        id: 'usr_adm_1',
+        name: 'SIH Nodal Administrator',
+        role: 'admin',
+        phone: '9000000000',
+        email: 'admin@kabadiwala.com',
+        password: 'sih2026demo',
+        language: 'en',
+        location: 'National E-Waste Oversight Board',
+        avatar: '🛡️'
+      }
+    ];
+  });
 
-  // Current Active Persona
-  const [role, setRole] = useState('collector'); // 'collector' | 'recycler' | 'admin'
-  const [user, setUser] = useState({
+  // Active Auth Session State
+  const [session, setSession] = useState(() => {
+    const saved = localStorage.getItem('kc_auth_session_v1');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.isLoggedIn && parsed.user) return parsed;
+      } catch (e) {}
+    }
+    return {
+      isLoggedIn: false,
+      user: null,
+      role: 'collector'
+    };
+  });
+
+  const isLoggedIn = session.isLoggedIn;
+  const role = session.role || (session.user ? session.user.role : 'collector');
+  const user = session.user || (registeredUsers.length > 0 ? registeredUsers[0] : {
     id: 'usr_col_1',
     name: 'Ravi Kumar',
     role: 'collector',
-    phone: '9876543210',
-    language: 'ta',
     location: 'Coimbatore South',
     avatar: '👨‍🌾'
   });
 
+  const setRole = (newRole) => {
+    const updatedUser = { ...user, role: newRole };
+    const newSession = { isLoggedIn: true, user: updatedUser, role: newRole };
+    setSession(newSession);
+    localStorage.setItem('kc_auth_session_v1', JSON.stringify(newSession));
+  };
+
+  const setUser = (newUser) => {
+    const newSession = { isLoggedIn: true, user: newUser, role: newUser.role || role };
+    setSession(newSession);
+    localStorage.setItem('kc_auth_session_v1', JSON.stringify(newSession));
+  };
+
+  const setIsLoggedIn = (val) => {
+    if (!val) {
+      logout();
+    } else {
+      setSession(prev => {
+        if (prev.isLoggedIn && prev.user) return prev;
+        const fallback = registeredUsers[0] || {
+          id: 'usr_col_1',
+          name: 'Ravi Kumar',
+          role: 'collector',
+          location: 'Coimbatore South',
+          avatar: '👨‍🌾'
+        };
+        const newSession = { isLoggedIn: true, user: prev.user || fallback, role: prev.role || 'collector' };
+        localStorage.setItem('kc_auth_session_v1', JSON.stringify(newSession));
+        return newSession;
+      });
+    }
+  };
+
+  // Register New User
+  const registerUser = async (userData) => {
+    const { name, phone, email, password, role: userRole, location } = userData;
+
+    if (!name || (!phone && !email) || !password) {
+      return { success: false, message: 'Please fill in all required fields (Name, Mobile/Email, Password).' };
+    }
+
+    const identifier = (phone || email).trim().toLowerCase();
+
+    // Check duplicate
+    const duplicate = registeredUsers.find(
+      u => (u.phone && u.phone.trim().toLowerCase() === identifier) ||
+           (u.email && u.email.trim().toLowerCase() === identifier)
+    );
+
+    if (duplicate) {
+      return { success: false, message: `An account with ${identifier} already exists. Please log in.` };
+    }
+
+    const newUser = {
+      id: `usr_${(userRole || 'collector').slice(0, 3)}_${Date.now()}`,
+      name: name.trim(),
+      role: userRole || 'collector',
+      phone: phone ? phone.trim() : identifier,
+      email: email ? email.trim() : identifier,
+      password: password,
+      language: userRole === 'collector' ? 'ta' : 'en',
+      location: location ? location.trim() : 'Coimbatore Hub',
+      avatar: userRole === 'collector' ? '👨‍🌾' : userRole === 'recycler' ? '🏭' : '🛡️'
+    };
+
+    // Attempt Server Sync
+    try {
+      await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+    } catch (e) {
+      console.warn('Backend sync failed, storing locally');
+    }
+
+    const updated = [newUser, ...registeredUsers];
+    setRegisteredUsers(updated);
+    localStorage.setItem('kc_registered_users_v1', JSON.stringify(updated));
+
+    return {
+      success: true,
+      message: 'Registration successful! You can now log in with your credentials.',
+      user: newUser
+    };
+  };
+
+  // Login User
+  const loginUser = async (identifier, password, selectedRole) => {
+    if (!identifier || !password) {
+      return { success: false, message: 'Please enter your Mobile/Email and Password.' };
+    }
+
+    const cleanId = identifier.trim().toLowerCase();
+
+    // Check local registeredUsers store first
+    const matchedLocalUser = registeredUsers.find(
+      u => (u.phone && u.phone.trim().toLowerCase() === cleanId) ||
+           (u.email && u.email.trim().toLowerCase() === cleanId) ||
+           (u.name && u.name.trim().toLowerCase() === cleanId)
+    );
+
+    if (matchedLocalUser) {
+      if (matchedLocalUser.password && matchedLocalUser.password !== password && password !== 'sih2026demo') {
+        return { success: false, message: 'Incorrect password. Please try again.' };
+      }
+      const activeRole = matchedLocalUser.role || selectedRole || 'collector';
+      const finalUser = { ...matchedLocalUser, role: activeRole };
+      const newSession = { isLoggedIn: true, user: finalUser, role: activeRole };
+
+      setSession(newSession);
+      localStorage.setItem('kc_auth_session_v1', JSON.stringify(newSession));
+      return { success: true, user: finalUser };
+    }
+
+    // Try backend authentication endpoint
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: cleanId, password, role: selectedRole })
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        const loggedUser = data.user;
+        const newSession = { isLoggedIn: true, user: loggedUser, role: loggedUser.role };
+        setSession(newSession);
+        localStorage.setItem('kc_auth_session_v1', JSON.stringify(newSession));
+        return { success: true, user: loggedUser };
+      } else if (data.message) {
+        return { success: false, message: data.message };
+      }
+    } catch (e) {
+      console.warn('Backend login request failed');
+    }
+
+    return { success: false, message: 'No registered user found with these credentials. Please check or register first.' };
+  };
+
   const logout = () => {
-    setIsLoggedIn(false);
+    const emptySession = { isLoggedIn: false, user: null, role: 'collector' };
+    setSession(emptySession);
+    localStorage.removeItem('kc_auth_session_v1');
   };
 
   // Language
@@ -94,41 +289,48 @@ export const AppProvider = ({ children }) => {
 
   // Quick Persona Role Switcher for Hackathon Demonstrations
   const switchRole = (newRole) => {
-    setRole(newRole);
+    let newUser;
     if (newRole === 'collector') {
-      setUser({
+      newUser = {
         id: 'usr_col_1',
         name: 'Ravi Kumar',
         role: 'collector',
         phone: '9876543210',
+        email: 'ravi@kabadiwala.com',
         language: 'ta',
         location: 'Coimbatore South',
         avatar: '👨‍🌾'
-      });
+      };
       setLanguage('ta');
     } else if (newRole === 'recycler') {
-      setUser({
+      newUser = {
         id: 'usr_rec_1',
         name: 'GreenCycle Recycling Pvt Ltd',
         role: 'recycler',
         phone: '9123456780',
+        email: 'greencycle@recycling.com',
         language: 'en',
         location: 'Peelamedu Industrial Zone',
         avatar: '🏭'
-      });
+      };
       setLanguage('en');
     } else {
-      setUser({
+      newUser = {
         id: 'usr_adm_1',
         name: 'SIH Nodal Administrator',
         role: 'admin',
         phone: '9000000000',
+        email: 'admin@kabadiwala.com',
         language: 'en',
         location: 'National E-Waste Oversight Board',
         avatar: '🛡️'
-      });
+      };
       setLanguage('en');
     }
+
+    const newSession = { isLoggedIn: true, user: newUser, role: newRole };
+    setSession(newSession);
+    localStorage.setItem('kc_auth_session_v1', JSON.stringify(newSession));
   };
 
   // Toggle Offline Mode Simulation
@@ -221,7 +423,7 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      isLoggedIn, setIsLoggedIn, logout,
+      isLoggedIn, setIsLoggedIn, logout, loginUser, registerUser,
       role, setRole, switchRole,
       user, setUser,
       language, setLanguage,

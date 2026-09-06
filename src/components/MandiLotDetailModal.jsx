@@ -5,7 +5,7 @@ import { Store, Users, Weight, IndianRupee, ShieldCheck, CheckCircle, Truck, X, 
 import confetti from 'canvas-confetti';
 
 export const MandiLotDetailModal = ({ lot, isOpen, onClose }) => {
-  const { role, joinMandiLot, acceptMandiLot, setVerifiedHandoverOpen } = useApp();
+  const { role, user, joinMandiLot, acceptMandiLot, setVerifiedHandoverOpen } = useApp();
 
   if (!isOpen || !lot) return null;
 
@@ -85,7 +85,7 @@ export const MandiLotDetailModal = ({ lot, isOpen, onClose }) => {
           <h4 className="font-extrabold text-slate-300 mb-2">📦 Aggregated Micro-Lot Breakdown:</h4>
           <div className="space-y-1.5 text-slate-200">
             <div className="flex justify-between bg-slate-900 p-2 rounded-xl border border-slate-700">
-              <span>👨‍🌾 Collector Ravi Kumar:</span>
+              <span>👨‍🌾 Collector {role === 'collector' ? user?.name : 'Ravi Kumar'}:</span>
               <span className="font-bold text-emerald-400">2 Mobile Phones (0.4 kg)</span>
             </div>
             <div className="flex justify-between bg-slate-900 p-2 rounded-xl border border-slate-700">

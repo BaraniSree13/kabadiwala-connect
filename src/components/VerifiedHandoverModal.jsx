@@ -5,7 +5,7 @@ import { QrCode, CheckCircle2, ShieldCheck, IndianRupee, RefreshCw, X, ArrowRigh
 import confetti from 'canvas-confetti';
 
 export const VerifiedHandoverModal = () => {
-  const { verifiedHandoverOpen, setVerifiedHandoverOpen, activeTxId, verifyHandover, t } = useApp();
+  const { user, verifiedHandoverOpen, setVerifiedHandoverOpen, activeTxId, verifyHandover, t } = useApp();
 
   const [pin, setPin] = useState('1024');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -130,7 +130,7 @@ export const VerifiedHandoverModal = () => {
             <div className="bg-slate-800 p-3.5 rounded-2xl border border-slate-700 space-y-2 text-xs mb-4">
               <div className="flex justify-between items-center text-emerald-400 font-bold">
                 <span>Collector Verification</span>
-                <span>Ravi Kumar ✓</span>
+                <span>{user?.name || 'Ravi Kumar'} ✓</span>
               </div>
               <div className="flex justify-between items-center text-emerald-400 font-bold">
                 <span>Recycler Verification</span>

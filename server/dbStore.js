@@ -5,15 +5,15 @@ import path from 'path';
 // Memory database preloaded with rich seed data
 const store = {
   users: [
-    { id: 'usr_col_1', name: 'Ravi Kumar', role: 'collector', phone: '9876543210', language: 'ta', location: 'Coimbatore South', avatar: '👨‍🌾' },
-    { id: 'usr_col_2', name: 'Selvam M', role: 'collector', phone: '9876543211', language: 'ta', location: 'Gandhipuram, Coimbatore', avatar: '👨‍🌾' },
-    { id: 'usr_col_3', name: 'Anitha Devi', role: 'collector', phone: '9876543212', language: 'hi', location: 'Peelamedu, Coimbatore', avatar: '👩‍🌾' },
-    { id: 'usr_col_4', name: 'Rajesh Sharma', role: 'collector', phone: '9876543213', language: 'hi', location: 'R.S. Puram, Coimbatore', avatar: '👨‍🌾' },
-    { id: 'usr_col_5', name: 'Suresh K', role: 'collector', phone: '9876543214', language: 'en', location: 'Singanallur, Coimbatore', avatar: '👨‍🌾' },
-    { id: 'usr_rec_1', name: 'GreenCycle Recycling Pvt Ltd', role: 'recycler', phone: '9123456780', language: 'en', location: 'Peelamedu Industrial Zone', avatar: '🏭' },
-    { id: 'usr_rec_2', name: 'EcoVolt E-Waste Solutions', role: 'recycler', phone: '9123456781', language: 'en', location: 'SIDCO Industrial Estate', avatar: '🏭' },
-    { id: 'usr_rec_3', name: 'EarthMelt Metals & E-Recycling', role: 'recycler', phone: '9123456782', language: 'en', location: 'Kurichi Industrial Belt', avatar: '🏢' },
-    { id: 'usr_adm_1', name: 'SIH Nodal Administrator', role: 'admin', phone: '9000000000', language: 'en', location: 'National E-Waste Oversight Board', avatar: '🛡️' }
+    { id: 'usr_col_1', name: 'Ravi Kumar', role: 'collector', phone: '9876543210', password: 'sih2026demo', language: 'ta', location: 'Coimbatore South', avatar: '👨‍🌾' },
+    { id: 'usr_col_2', name: 'Selvam M', role: 'collector', phone: '9876543211', password: 'sih2026demo', language: 'ta', location: 'Gandhipuram, Coimbatore', avatar: '👨‍🌾' },
+    { id: 'usr_col_3', name: 'Anitha Devi', role: 'collector', phone: '9876543212', password: 'sih2026demo', language: 'hi', location: 'Peelamedu, Coimbatore', avatar: '👩‍🌾' },
+    { id: 'usr_col_4', name: 'Rajesh Sharma', role: 'collector', phone: '9876543213', password: 'sih2026demo', language: 'hi', location: 'R.S. Puram, Coimbatore', avatar: '👨‍🌾' },
+    { id: 'usr_col_5', name: 'Suresh K', role: 'collector', phone: '9876543214', password: 'sih2026demo', language: 'en', location: 'Singanallur, Coimbatore', avatar: '👨‍🌾' },
+    { id: 'usr_rec_1', name: 'GreenCycle Recycling Pvt Ltd', role: 'recycler', phone: '9123456780', password: 'sih2026demo', language: 'en', location: 'Peelamedu Industrial Zone', avatar: '🏭' },
+    { id: 'usr_rec_2', name: 'EcoVolt E-Waste Solutions', role: 'recycler', phone: '9123456781', password: 'sih2026demo', language: 'en', location: 'SIDCO Industrial Estate', avatar: '🏭' },
+    { id: 'usr_rec_3', name: 'EarthMelt Metals & E-Recycling', role: 'recycler', phone: '9123456782', password: 'sih2026demo', language: 'en', location: 'Kurichi Industrial Belt', avatar: '🏢' },
+    { id: 'usr_adm_1', name: 'SIH Nodal Administrator', role: 'admin', phone: '9000000000', password: 'sih2026demo', language: 'en', location: 'National E-Waste Oversight Board', avatar: '🛡️' }
   ],
 
   collectors: [

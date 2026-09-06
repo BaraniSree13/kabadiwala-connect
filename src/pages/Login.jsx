@@ -5,23 +5,63 @@ import { Shield, Factory, UserCheck, Lock, Phone, Mail, ArrowRight, Sparkles, Ch
 import confetti from 'canvas-confetti';
 
 export const Login = ({ onLoginSuccess }) => {
-  const { switchRole, setUser, t } = useApp();
+  const { switchRole, registerUser, loginUser, t } = useApp();
 
   const [isRegister, setIsRegister] = useState(false);
   const [selectedRole, setSelectedRole] = useState('collector');
-  const [identifier, setIdentifier] = useState('9876543210');
-  const [password, setPassword] = useState('sih2026demo');
-  const [name, setName] = useState('Ravi Kumar');
-  const [location, setLocation] = useState('Coimbatore South');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [location, setLocation] = useState('');
 
-  const handleCustomLogin = (e) => {
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    switchRole(selectedRole);
-    confetti({ particleCount: 50, spread: 60 });
-    if (onLoginSuccess) onLoginSuccess();
+    setErrorMsg('');
+    setSuccessMsg('');
+    setLoading(true);
+
+    try {
+      if (isRegister) {
+        const res = await registerUser({
+          name: name || 'Test User',
+          phone: identifier,
+          email: identifier,
+          password,
+          role: selectedRole,
+          location: location || 'Coimbatore Hub'
+        });
+
+        if (res.success) {
+          setSuccessMsg(res.message);
+          confetti({ particleCount: 50, spread: 60 });
+          setIsRegister(false); // Switch to login tab, keep identifier and password for instant sign in
+        } else {
+          setErrorMsg(res.message);
+        }
+      } else {
+        const res = await loginUser(identifier, password, selectedRole);
+
+        if (res.success) {
+          confetti({ particleCount: 50, spread: 60 });
+          if (onLoginSuccess) onLoginSuccess();
+        } else {
+          setErrorMsg(res.message);
+        }
+      }
+    } catch (err) {
+      setErrorMsg('An unexpected authentication error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleQuickDemoLogin = (roleName) => {
+    setErrorMsg('');
+    setSuccessMsg('');
     switchRole(roleName);
     confetti({ particleCount: 50, spread: 60 });
     if (onLoginSuccess) onLoginSuccess();
@@ -68,7 +108,7 @@ export const Login = ({ onLoginSuccess }) => {
             >
               <span className="text-2xl group-hover:scale-110 transition-transform">👨‍🌾</span>
               <span className="text-[11px] font-extrabold text-white">Collector</span>
-              <span className="text-[9px] text-slate-400">Ravi Kumar</span>
+              <span className="text-[9px] text-slate-400">Demo Collector</span>
             </button>
 
             <button
@@ -94,7 +134,11 @@ export const Login = ({ onLoginSuccess }) => {
         {/* Tab Switcher: Login vs Register */}
         <div className="flex border-b border-slate-800 mb-5 text-xs font-bold">
           <button
-            onClick={() => setIsRegister(false)}
+            onClick={() => {
+              setIsRegister(false);
+              setErrorMsg('');
+              setSuccessMsg('');
+            }}
             className={`flex-1 py-2 text-center border-b-2 transition-all ${
               !isRegister ? 'border-emerald-500 text-emerald-400 font-extrabold' : 'border-transparent text-slate-400'
             }`}
@@ -102,7 +146,15 @@ export const Login = ({ onLoginSuccess }) => {
             LOGIN
           </button>
           <button
-            onClick={() => setIsRegister(true)}
+            onClick={() => {
+              setIsRegister(true);
+              setErrorMsg('');
+              setSuccessMsg('');
+              setName('');
+              setIdentifier('');
+              setPassword('');
+              setLocation('');
+            }}
             className={`flex-1 py-2 text-center border-b-2 transition-all ${
               isRegister ? 'border-emerald-500 text-emerald-400 font-extrabold' : 'border-transparent text-slate-400'
             }`}
@@ -111,8 +163,29 @@ export const Login = ({ onLoginSuccess }) => {
           </button>
         </div>
 
+        {/* Status Messages */}
+        {successMsg && (
+          <div className="mb-4 p-3 bg-emerald-950/80 border border-emerald-500/80 rounded-xl text-emerald-300 text-xs flex items-start gap-2 animate-fadeIn">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Registration Successful!</p>
+              <p className="text-[11px] text-emerald-200/90">{successMsg}</p>
+            </div>
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="mb-4 p-3 bg-rose-950/80 border border-rose-500/80 rounded-xl text-rose-300 text-xs flex items-start gap-2 animate-fadeIn">
+            <Shield className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Authentication Notice</p>
+              <p className="text-[11px] text-rose-200/90">{errorMsg}</p>
+            </div>
+          </div>
+        )}
+
         {/* Authentication Form */}
-        <form onSubmit={handleCustomLogin} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           
           {/* Role Selection */}
           <div>
@@ -159,8 +232,8 @@ export const Login = ({ onLoginSuccess }) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 focus:outline-none"
-                placeholder="Ravi Kumar"
+                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 focus:outline-none focus:border-emerald-500"
+                placeholder="e.g. Test Collector"
               />
             </div>
           )}
@@ -175,8 +248,8 @@ export const Login = ({ onLoginSuccess }) => {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
-                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 p-3 focus:outline-none"
-                placeholder="9876543210"
+                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 p-3 focus:outline-none focus:border-emerald-500"
+                placeholder={isRegister ? "e.g. testcollector@example.com or 9876543210" : "e.g. 9876543210 or email"}
               />
             </div>
           </div>
@@ -191,7 +264,7 @@ export const Login = ({ onLoginSuccess }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 p-3 focus:outline-none"
+                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 p-3 focus:outline-none focus:border-emerald-500"
                 placeholder="••••••••"
               />
             </div>
@@ -205,7 +278,7 @@ export const Login = ({ onLoginSuccess }) => {
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 focus:outline-none"
+                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 focus:outline-none focus:border-emerald-500"
                 placeholder="Coimbatore South"
               />
             </div>
@@ -214,9 +287,16 @@ export const Login = ({ onLoginSuccess }) => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-slate-950 font-black py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-slate-950 font-black py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform disabled:opacity-50"
           >
-            <span>{isRegister ? 'CREATE ACCOUNT & LOGIN' : 'SIGN IN TO DASHBOARD'}</span>
+            <span>
+              {loading
+                ? 'PROCESSING...'
+                : isRegister
+                ? 'CREATE ACCOUNT'
+                : 'SIGN IN TO DASHBOARD'}
+            </span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

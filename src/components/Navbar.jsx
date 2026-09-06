@@ -26,7 +26,7 @@ export const Navbar = () => {
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            <span>👨‍🌾</span> Collector (Ravi)
+            <span>👨‍🌾</span> Collector ({role === 'collector' && user?.name ? user.name : 'Demo'})
           </button>
 
           <button
