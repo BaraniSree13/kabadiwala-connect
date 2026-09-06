@@ -1,0 +1,16 @@
+{
+  "short_name": "Kabadiwala",
+  "name": "Kabadiwala Connect - SIH 2026",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#16a34a",
+  "theme_color": "#16a34a",
+  "display": "standalone",
+  "orientation": "portrait"
+}
